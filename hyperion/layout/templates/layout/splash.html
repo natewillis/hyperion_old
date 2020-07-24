@@ -1,0 +1,41 @@
+{% load static %}
+
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Hyperion</title>
+
+  <style>
+    .rocketContainer {
+      background-color: #FFFFFF;
+      width: 500px;
+      height: 500px;
+      display: flex;
+      align-content: center;
+      justify-content: center;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      margin: auto;
+    }
+
+    .rocketContainer object {
+      width: 500px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="rocketContainer">
+    <object type="image/svg+xml"
+            data="{% static "layout/hyperion-black-words.svg" %}">
+      it's a rocketship!
+    </object>
+  </div>
+</body>
+
+</html>
