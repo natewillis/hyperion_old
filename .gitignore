@@ -139,3 +139,6 @@ cython_debug/
 
 # Pycharm
 .idea/
+
+# Ignore the static folder, it'll be managed by collectstatic on the pythonanywhere side
+/hyperion/static/

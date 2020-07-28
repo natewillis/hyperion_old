@@ -13,6 +13,19 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import environ
 import os
 
+# GeoDjango and Windows Need To Work together (install OSGEO4W)
+if os.name == 'nt':
+    import platform
+    OSGEO4W = r"C:\OSGeo4W"
+    if '64' in platform.architecture()[0]:
+        OSGEO4W += "64"
+    assert os.path.isdir(OSGEO4W), "Directory does not exist: " + OSGEO4W
+    os.environ['OSGEO4W_ROOT'] = OSGEO4W
+    os.environ['GDAL_DATA'] = "C:\Program Files\GDAL\gdal-data"
+    os.environ['PROJ_LIB'] = OSGEO4W + r"\share\proj"
+    GDAL_LIBRARY_PATH = r'C:\OSGeo4W64\bin\gdal204'
+    os.environ['PATH'] = OSGEO4W + r"\bin;" + os.environ['PATH']
+
 # Configure debug
 env = environ.Env(
     # set casting, default value
@@ -47,8 +60,8 @@ ALLOWED_HOSTS = tuple(env.list('ALLOWED_HOSTS', default=[]))
 
 INSTALLED_APPS = [
     'layout.apps.LayoutConfig',
-    'scenario.apps.ScenarioConfig',
     'world.apps.WorldConfig',
+    'scenario.apps.ScenarioConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,6 +69,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'rest_framework',
+    'rest_framework_gis',
 ]
 
 MIDDLEWARE = [

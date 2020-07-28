@@ -1,30 +1,51 @@
+{% extends "layout/base.html" %}
+{% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
+{% block extra_css %}
+    #cesiumContainer {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+    }
+{% endblock %}
 
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Scenario Dashboard</title>
+{% block extra_css_files %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.min.css" />
+<link href="{% static 'layout/Cesium/Widgets/widgets.css' %}" rel="stylesheet">
+{% endblock %}
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.min.css" />
+
+{% block content %}
+
+    <h1>Scenarios</h1>
+    <div class="grid-stack"></div>
+
+{% endblock %}
+
+{% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.all.js"></script>
+    <script src="{% static 'layout/Cesium/Cesium.js' %}"></script>
+    <script type="text/javascript">
 
-  <style type="text/css">
-    .grid-stack-item-removing {
-      opacity: 0.8;
-      filter: blur(5px);
-    }
+        // Initialize Gridstack
+        var grid = GridStack.init();
 
-    #trash {
-      background: rgba(255, 0, 0, 0.4);
-    }
-  </style>
-</head>
-<body>
-<h1>Advanced Demo</h1>
+        // Dynamically initialize cesium by adding the gridstack widget div and then initializing the cesium viewer
+        grid.addWidget('<div><div class="grid-stack-item-content" id="cesiumContainer"></div></div>', {width: 6, height:6});
 
+        var viewer = new Cesium.Viewer("cesiumContainer",{
+            timeline: false,
+            animation: false
+        });
+        viewer.dataSources.add(Cesium.GeoJsonDataSource.load('{% url "scenario:scenarios-weapons" scenario.id %}', {
+            stroke: Cesium.Color.HOTPINK,
+            fill: Cesium.Color.PINK,
+            strokeWidth: 3,
+            markerSymbol: '?'
+        }));
 
-</body>
-</html>
+    </script>
+
+{% endblock %}

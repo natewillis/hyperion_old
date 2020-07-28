@@ -7,6 +7,7 @@ DEFAULT_WAVE_ID = 1
 DEFAULT_POINT = Point(0, 0, srid=4326)
 DEFAULT_DURATION = datetime.timedelta(days=0)
 
+
 # Create your models here.
 class Scenario(models.Model):
     name = models.CharField(max_length=200)
@@ -23,6 +24,9 @@ class Wave(models.Model):
     name = models.CharField(max_length=200)
     start_delta = models.DurationField(default=DEFAULT_DURATION)
 
+    def start_datetime(self):
+        return self.scenario.exercise_start + self.start_delta
+
 
 class Vehicle(models.Model):
     scenario = models.ForeignKey(Scenario, on_delete=models.CASCADE)
@@ -38,12 +42,21 @@ class Weapon(models.Model):
     wave = models.ForeignKey(Wave, on_delete=models.CASCADE, default=DEFAULT_WAVE_ID)
     page_display_name = models.CharField(max_length=200)
     true_launch_location = models.PointField(default=DEFAULT_POINT)
-    observed_launch_location = models.PointField(null=True)
-    observed_launch_country = models.ForeignKey('world.WorldBorder', null=True, on_delete=models.CASCADE)
+    observed_launch_location = models.PointField(null=True, blank=True)
+    observed_launch_country = models.ForeignKey('world.WorldBorder', null=True, blank=True, on_delete=models.CASCADE)
     launch_delta = models.DurationField(default=DEFAULT_DURATION)
 
     def __str__(self):
         return f'{self.page_display_name} - {self.pk}'
+
+    def launch_location(self):
+        if self.observed_launch_location is None:
+            return self.true_launch_location
+        else:
+            return self.observed_launch_location
+
+    def launch_datetime(self):
+        return self.wave.start_datetime() + self.launch_delta
 
 
 class Warhead(models.Model):
@@ -56,3 +69,6 @@ class Warhead(models.Model):
 
     def __str__(self):
         return f'{self.warhead_yield} kt warhead - {self.pk}'
+
+    def impact_datetime(self):
+        return self.weapon.launch_datetime() + self.impact_delta

@@ -5,7 +5,7 @@
 <h1>Scenarios</h1>
     <ul>
     {% for scenario in scenario_list %}
-        <li><a href="{% url 'scenario:scenario-edit' scenario.id %}">{{ scenario.exercise_start|date }} - {{ scenario.name }} </a></li>
+        <li><a href="{% url 'scenario:scenario_edit' scenario.id %}">{{ scenario.exercise_start|date }} - {{ scenario.name }} </a> - <a href="{% url 'scenario:scenario_dashboard' scenario.id %}">dashboard</a></li>
     {% empty %}
         <li>No scenarios yet.</li>
     {% endfor %}

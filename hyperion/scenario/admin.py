@@ -1,8 +1,9 @@
 from django.contrib.gis import admin
-from .models import Scenario, Vehicle, Weapon, Warhead
+from . import models
 
 # Register your models here.
-admin.site.register(Scenario, admin.ModelAdmin)
-admin.site.register(Vehicle, admin.GeoModelAdmin)
-admin.site.register(Weapon, admin.GeoModelAdmin)
-admin.site.register(Warhead, admin.GeoModelAdmin)
+admin.site.register(models.Scenario, admin.ModelAdmin)
+admin.site.register(models.Vehicle, admin.GeoModelAdmin)
+admin.site.register(models.Weapon, admin.GeoModelAdmin)
+admin.site.register(models.Warhead, admin.GeoModelAdmin)
+admin.site.register(models.Wave, admin.GeoModelAdmin)
