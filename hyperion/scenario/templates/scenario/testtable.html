@@ -1,0 +1,35 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+
+{% block extra_css_files %}
+<link href="https://unpkg.com/tabulator-tables@4.7.2/dist/css/tabulator.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+    <div id="shot-table"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.7.2/dist/js/tabulator.min.js"></script>
+    <script type="text/javascript">
+
+            var tableData = [{"id":1,"page_display_name":"Missile 1","latitude":24.339179992676,"longitude":2.3067855834961},{"id":2,"page_display_name":"WEapon 2","latitude":-9.755859375,"longitude":15.99609375},{"id":3,"page_display_name":"Another weapon","latitude":1.0546875,"longitude":29.8828125},{"id":4,"page_display_name":"Weapon in another wave","latitude":8.6513900756836,"longitude":3.5001754760742}]
+
+            var table = new Tabulator("#shot-table", {
+                data:tableData,
+                columns:[
+                    {title: "Name", field:"page_display_name"},
+                    {title: "LAT", field:"latitude"},
+                    {title: "LON", field:"longitude"},
+                ]
+            });
+    </script>
+
+
+
+{% endblock %}

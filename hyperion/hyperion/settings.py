@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'rest_framework',
     'rest_framework_gis',
+    'django_filters'
 ]
 
 MIDDLEWARE = [
@@ -143,3 +144,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 if 'STATIC_ROOT' in env:
     STATIC_ROOT = env('STATIC_ROOT')
+
+# Django Rest Filtering
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}

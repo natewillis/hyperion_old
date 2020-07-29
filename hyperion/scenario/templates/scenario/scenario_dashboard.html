@@ -14,37 +14,54 @@
 {% block extra_css_files %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.min.css" />
 <link href="{% static 'layout/Cesium/Widgets/widgets.css' %}" rel="stylesheet">
+<link href="https://unpkg.com/tabulator-tables@4.7.2/dist/css/tabulator.min.css" rel="stylesheet">
 {% endblock %}
 
 
 {% block content %}
 
-    <h1>Scenarios</h1>
+    <h1>{{ scenario.name }}</h1>
     <div class="grid-stack"></div>
+
 
 {% endblock %}
 
 {% block extra_js %}
     <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.all.js"></script>
     <script src="{% static 'layout/Cesium/Cesium.js' %}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js" integrity="sha512-rmZcZsyhe0/MAjquhTgiUcb4d9knaFc7b5xAfju483gbEXTkeJRUMIPk6s3ySZMYUHEcjKbjLjyddGWMrNEvZg==" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.7.2/dist/js/tabulator.min.js"></script>
     <script type="text/javascript">
+        $(document).ready(function() {
+            // Initialize Gridstack
+            var grid = GridStack.init();
 
-        // Initialize Gridstack
-        var grid = GridStack.init();
+            // Dynamically initialize cesium by adding the gridstack widget div and then initializing the cesium viewer
+            grid.addWidget('<div><div class="grid-stack-item-content" id="cesiumContainer"></div></div>', {width: 6, height:9});
 
-        // Dynamically initialize cesium by adding the gridstack widget div and then initializing the cesium viewer
-        grid.addWidget('<div><div class="grid-stack-item-content" id="cesiumContainer"></div></div>', {width: 6, height:6});
+            var viewer = new Cesium.Viewer("cesiumContainer",{
+                timeline: false,
+                animation: false
+            });
+            viewer.dataSources.add(Cesium.GeoJsonDataSource.load('/scenario/api/weapons_gis/?wave__scenario={{ scenario.id }}', {
+                stroke: Cesium.Color.HOTPINK,
+                fill: Cesium.Color.PINK,
+                strokeWidth: 3,
+                markerSymbol: '?'
+            }));
 
-        var viewer = new Cesium.Viewer("cesiumContainer",{
-            timeline: false,
-            animation: false
-        });
-        viewer.dataSources.add(Cesium.GeoJsonDataSource.load('{% url "scenario:scenarios-weapons" scenario.id %}', {
-            stroke: Cesium.Color.HOTPINK,
-            fill: Cesium.Color.PINK,
-            strokeWidth: 3,
-            markerSymbol: '?'
-        }));
+            // Dynamically initialize tabulator shots widget div and then add the data to tabulator
+            grid.addWidget('<div><div class="grid-stack-item-content" id="shot-table"></div></div>', {width: 6, height:9});
+            var table = new Tabulator("#shot-table", {
+                ajaxURL:"/scenario/api/weapons_table/?wave__scenario={{ scenario.id }}", //ajax URL,
+                columns:[
+                    {title: "Name", field:"page_display_name"},
+                    {title: "Launch Latitude", field:"latitude"},
+                    {title: "Launch Longitude", field:"longitude"},
+                    {title: "Launch Time", field:"launch_datetime", formatter:"datetime"},
+                ]
+            });
+         });
 
     </script>
 
