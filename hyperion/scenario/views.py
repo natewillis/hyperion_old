@@ -60,6 +60,12 @@ class WeaponGISViewSet(viewsets.ModelViewSet):
     filterset_fields = ('wave', 'wave__scenario')
 
 
+class WarheadGISViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.WarheadGISSerializer
+    queryset = models.Warhead.objects.all()
+    filterset_fields = ('weapon__wave', 'weapon__wave__scenario')
+
+
 class WeaponTableViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.WeaponTableSerializer
     queryset = models.Weapon.objects.all()

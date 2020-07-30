@@ -9,12 +9,18 @@
         padding: 0;
         overflow: hidden;
     }
+    #add-weapon-button {
+        display: block;
+        margin: 0 auto;
+    }
 {% endblock %}
 
 {% block extra_css_files %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.min.css" />
 <link href="{% static 'layout/Cesium/Widgets/widgets.css' %}" rel="stylesheet">
 <link href="https://unpkg.com/tabulator-tables@4.7.2/dist/css/tabulator.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 {% endblock %}
 
 
@@ -31,7 +37,76 @@
     <script src="{% static 'layout/Cesium/Cesium.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js" integrity="sha512-rmZcZsyhe0/MAjquhTgiUcb4d9knaFc7b5xAfju483gbEXTkeJRUMIPk6s3ySZMYUHEcjKbjLjyddGWMrNEvZg==" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.7.2/dist/js/tabulator.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     <script type="text/javascript">
+
+        var addWarheadIcon = function(cell, formatterParams) {
+            return "<i class='fa fa-bomb'></i><i class='fa fa-plus'></i>";
+        };
+
+        var removeMissileIcon = function(cell, formatterParams) {
+            return "<i class='fa fa-rocket'></i><i class='fa fa-minus'></i>";
+        };
+
+        var hyperionDateTimeFormatter = function(cell, formatterParams, onRendered) {
+            //cell - the cell component
+            //formatterParams - parameters set for the column
+            //onRendered - function to call when the formatter has been rendered
+
+            moDate = moment(cell.getValue());
+            return moDate.format('M/D/YY H:m'); //return the contents of the cell;
+        };
+
+        var hyperionDateTimeEditor = function(cell, onRendered, success, cancel, editorParams){
+            //cell - the cell component for the editable cell
+            //onRendered - function to call when the editor has been rendered
+            //success - function to call to pass the successfuly updated value to Tabulator
+            //cancel - function to call to abort the edit and return to a normal cell
+            //editorParams - params object passed into the editorParams column definition property
+
+            //create and style editor
+            var editor = document.createElement("input");
+
+            // Run Flatpickr on value in input
+            editor.flatpickr({
+                enableTime: true,
+                time_24hr: true,
+                defaultDate: cell.getValue(),
+                onClose: function (selectedDates, dateStr, instance) {
+                    evt = window.event;
+                    var isEscape = false;
+                    if ("key" in evt) {
+                        isEscape = (evt.key === "Escape" || evt.key === "Esc");
+                    } else {
+                        isEscape = (evt.keyCode === 27);
+                    }
+                    if (isEscape) {
+                       // user hit escape
+                       cancel();
+                    } else {
+                       success(dateStr);
+                    }
+                }
+            });
+
+
+            //create and style input
+            editor.style.padding = "3px";
+            editor.style.width = "100%";
+            editor.style.boxSizing = "border-box";
+
+            //set focus on the select box when the editor is selected (timeout allows for editor to be added to DOM)
+            onRendered(function(){
+                editor.focus();
+                editor.style.css = "100%";
+            });
+
+            //return the editor element
+            return editor;
+        };
+
+
         $(document).ready(function() {
             // Initialize Gridstack
             var grid = GridStack.init();
@@ -44,23 +119,94 @@
                 animation: false
             });
             viewer.dataSources.add(Cesium.GeoJsonDataSource.load('/scenario/api/weapons_gis/?wave__scenario={{ scenario.id }}', {
-                stroke: Cesium.Color.HOTPINK,
-                fill: Cesium.Color.PINK,
-                strokeWidth: 3,
-                markerSymbol: '?'
+                markerSymbol: 'rocket'
+            }));
+            viewer.dataSources.add(Cesium.GeoJsonDataSource.load('/scenario/api/warheads_gis/?weapon__wave__scenario={{ scenario.id }}', {
+                markerSymbol: 'star'
             }));
 
             // Dynamically initialize tabulator shots widget div and then add the data to tabulator
-            grid.addWidget('<div><div class="grid-stack-item-content" id="shot-table"></div></div>', {width: 6, height:9});
+            grid.addWidget(`
+                <div>
+                    <div id="table-widget" class="grid-stack-item-content">
+                        <button id="add-weapon-button" type="button" class="btn btn-dark"><i class='fa fa-rocket'></i><i class='fa fa-plus'></i></button>
+                        <div id="shot-table"></div>
+                    </div>
+                </div>
+            `, {width: 6, height:9});
+
+
+            // Create Tabulator Table
             var table = new Tabulator("#shot-table", {
                 ajaxURL:"/scenario/api/weapons_table/?wave__scenario={{ scenario.id }}", //ajax URL,
                 columns:[
-                    {title: "Name", field:"page_display_name"},
-                    {title: "Launch Latitude", field:"latitude"},
-                    {title: "Launch Longitude", field:"longitude"},
-                    {title: "Launch Time", field:"launch_datetime", formatter:"datetime"},
-                ]
+                    {title: "Wave", field:"wave_name", editor:"input"},
+                    {title: "Name", field:"page_display_name", editor:"input"},
+                    {title: "Launch Latitude", field:"latitude",  editor:"number", editorParams:{min:-90, max:90, step:0.000000000001}},
+                    {title: "Launch Longitude", field:"longitude",  editor:"number", editorParams:{min:-180, max:180, step:0.000000000001}},
+                    {title: "Launch Time", field:"launch_datetime", formatter:hyperionDateTimeFormatter, editor:hyperionDateTimeEditor},
+                    {title: "Launch Country", field:"launch_country_code", editor:"input"},
+                    {formatter:addWarheadIcon, width:40, align:"center", cellClick:function(e, cell){
+                        const id = cell.getRow().getData().id;
+                        const subTable = Tabulator.prototype.findTable(".subTable" + id + "")[0];
+                        subTable.addRow({});
+                    }},
+                    {formatter:removeMissileIcon, width:40, align:"center", cellClick:function(e, cell){
+                        cell.getRow().delete();
+                    }},
+                ],
+                layout:"fitColumns",
+                height:"100%",
+                rowFormatter:function(row){
+                    // Get data
+                    const id = row.getData().id;
+
+                    //create and style holder elements
+                    var holderEl = document.createElement("div");
+                    var addWarheadEl = document.createElement("button");
+                    var tableEl = document.createElement("div");
+
+                    holderEl.style.boxSizing = "border-box";
+                    holderEl.style.padding = "10px 30px 10px 10px";
+                    holderEl.style.borderTop = "1px solid #333";
+                    holderEl.style.borderBottom = "1px solid #333";
+                    holderEl.style.background = "#ddd";
+
+                    tableEl.style.border = "1px solid #333";
+                    tableEl.setAttribute('class', "subTable" + id + "");
+
+                    holderEl.appendChild(tableEl);
+
+                    row.getElement().appendChild(holderEl);
+
+                    var subTable = new Tabulator(tableEl, {
+                       layout:"fitColumns",
+                       data:row.getData().warheads,
+                       columns:[
+                           {title:"Warhead ID", field:"id"},
+                           {title:"Yield", field:"warhead_yield"},
+                           {title:"Impact Time", field:"impact_datetime"},
+                           {title:"Latitude", field:"latitude"},
+                           {title:"Longitude", field:"longitude"},
+                       ]
+                    });
+
+                    //Add row on "Add Warhead" button click
+                    addWarheadEl.onclick = function () {
+                        subTable.addRow({});
+                    };
+
+                }
             });
+
+
+
+            //Add row on "Add Row" button click
+            $("#add-weapon-button").click(function(){
+                table.addRow({warheads:[]});
+            });
+
+
          });
 
     </script>

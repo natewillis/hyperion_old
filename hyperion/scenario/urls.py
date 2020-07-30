@@ -1,15 +1,16 @@
 from django.urls import path, include
 from . import views
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 
 
 # API router
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(r'scenarios', views.ScenarioViewSet)
 router.register(r'waves', views.WaveViewSet)
 router.register(r'weapons', views.WeaponViewSet)
 router.register(r'weapons_gis', views.WeaponGISViewSet)
 router.register(r'weapons_table', views.WeaponTableViewSet)
+router.register(r'warheads_gis', views.WarheadGISViewSet)
 
 app_name = 'scenario'
 urlpatterns = [
