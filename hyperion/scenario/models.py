@@ -25,6 +25,9 @@ class Wave(models.Model):
     name = models.CharField(max_length=200)
     start_delta = models.DurationField(default=DEFAULT_DURATION)
 
+    def __str__(self):
+        return f'{self.name} for {self.scenario.name}'
+
     def start_datetime(self):
         return self.scenario.exercise_start + self.start_delta
 
