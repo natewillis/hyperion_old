@@ -141,7 +141,6 @@ var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
         var tableDivHeight = $("#table-widget").height();
         var controlDivHeight = $(".table-controls").outerHeight(true);
         var tableHeight = tableDivHeight - controlDivHeight;
-        alert(tableHeight)
 
         // Create Tabulator Table
         var table = new Tabulator("#shot-table", {
@@ -257,13 +256,10 @@ var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
                 // Clear out warhead data as it doesnt update in the subtable
 
                 // Find the subtable
-                console.log(weaponData);
-                console.log(".subTable" + weaponData.id + "");
                 const subTable = Tabulator.prototype.findTable(".subTable" + weaponData.id + "")[0];
-                console.log(subTable);
 
-                // MAKE A COPY GODDAMMIT
                 // Load the data into warheads as tabulator doesnt update the warhead data with changes to subtable
+                // Copy needed because we'll delete some data out of the table for rest purposes
                 weaponData.warheads = JSON.parse(JSON.stringify(subTable.getData()));
 
                 // ID fixes
@@ -278,8 +274,6 @@ var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
                 });
 
                 // Post the data and process the return
-                console.log('before the post!')
-                console.log(weaponData)
                 postURL = '/scenario/api/weapons_table/'
 
                 // Create a temporary function
@@ -310,7 +304,6 @@ var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
 
             // Refresh the map when all the ajax has been pushed
             $.when(...ajaxPromises).then(()=>{
-                console.log('promises!')
                 reloadWeaponCesium(scenarioID, cesiumReloadData);
             });
 
