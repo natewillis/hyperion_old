@@ -178,6 +178,13 @@ var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
                 // Get data
                 const id = row.getData().id;
 
+                // Delete existing subtable if it exists
+                var el = row.getElement();
+                var nested = el.getElementsByClassName("subTableHolder");
+                for(let child of nested){
+                    child.parentNode.removeChild(child);
+                }
+
                 //create and style holder elements
                 var holderEl = document.createElement("div");
                 var addWarheadEl = document.createElement("button");
@@ -188,6 +195,7 @@ var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
                 holderEl.style.borderTop = "1px solid #333";
                 holderEl.style.borderBottom = "1px solid #333";
                 holderEl.style.background = "#ddd";
+                holderEl.setAttribute('class', "subTableHolder");
 
                 tableEl.style.border = "1px solid #333";
                 tableEl.setAttribute('class', "subTable" + id + "");
@@ -286,6 +294,8 @@ var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
                             contentType: "application/json; charset=utf-8",
                             dataType: 'json',
                             success: function(data){
+                                row.update(data);
+                                table.redraw();
                                 resolve(data);
                             },
                             error: function(errMsg) {
