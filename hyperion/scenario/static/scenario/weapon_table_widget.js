@@ -28,6 +28,11 @@ var removeMissileIcon = function(cell, formatterParams) {
     return "<i class='fa fa-rocket'></i><i class='fa fa-minus'></i>";
 };
 
+// formatter function for location picker
+var locationPickerIcon = function(cell, formatterParams) {
+    return "<i class='fa fa-crosshairs'></i>";
+};
+
 // formatter for hyperion datetime
 var hyperionDateTimeFormatter = function(cell, formatterParams, onRendered) {
     //cell - the cell component
@@ -94,26 +99,51 @@ var hyperionDateTimeEditor = function(cell, onRendered, success, cancel, editorP
 var countryCodes = {};
 
 // Main Load Table Function
-var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
+var loadWeaponTable = function(scenarioID, cesiumReloadData) {
+
+    // Load the location picker
+    var map = L.map('locationPickerMap').setView([48.86, 2.35], 11);
+    var marker;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+
+    // Update map from inputs function
+    updateMapFromInputs = function() {
+        var newLatLng = L.latLng( $('#locationPickerLat').val(),  $('#locationPickerLon').val());
+        if(typeof(marker)==='undefined') {
+            marker = new L.marker(newLatLng);
+        } else {
+            marker.setLatLng(newLatLng);
+        }
+        marker.addTo(map);
+        map.panTo(marker.getLatLng());
+    }
+
+    // Map Click Function
+    map.on('click', function(e) {
+        $('#locationPickerLat').val(e.latlng.lat);
+        $('#locationPickerLon').val(e.latlng.lng);
+        updateMapFromInputs();
+    });
+
+    // Update map from change in inputs
+    $('#locationPickerLat').change(updateMapFromInputs);
+    $('#locationPickerLon').change(updateMapFromInputs);
+
+    // Update map size when modal appears
+    $('#locationPickerModal').on('shown.bs.modal', function() {
+        map.invalidateSize();
+        updateMapFromInputs();
+        map.setZoom(10);
+    });
 
     // Setup .when to allow all the calls to run asyncronously, but synchronously as a whole
     $.when(
         $.getJSON('/world/api/worldborders_name/'), //Country names
         $.getJSON('/scenario/api/waves/?scenario='+scenarioID.toString()),
     ).done(function(worldData, waveData) {
-
-        // Dynamically initialize tabulator shots widget div and then add the data to tabulator
-        grid.addWidget(`
-            <div>
-                <div id="table-widget" class="grid-stack-item-content">
-                    <div class="table-controls">
-                        <button id="add-weapon-button" type="button" class="btn btn-dark"><i class='fa fa-rocket'></i><i class='fa fa-plus'></i></button>
-                        <button id="save-table-button" type="button" class="btn btn-dark"><i class='fa fa-save'></i></button>
-                    </div>
-                    <div id="shot-table"></div>
-                </div>
-            </div>
-        `, {width: 6, height:9});
 
         // Get data out of returned array
         worldData = worldData[0];
@@ -151,9 +181,33 @@ var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
                 {title: "Name", field:"page_display_name", editor:"input"},
                 {title: "Launch Latitude", field:"latitude",  editor:"number", editorParams:{min:-90, max:90, step:0.000000000001}},
                 {title: "Launch Longitude", field:"longitude",  editor:"number", editorParams:{min:-180, max:180, step:0.000000000001}},
+                {formatter:locationPickerIcon, width:20, align:"center", headerSort:false, cellClick:function(e, cell){
+
+                    // get row information
+                    thisRow = cell.getRow();
+                    launchName = thisRow.getCell('page_display_name').getValue();
+                    latitude = thisRow.getCell('latitude').getValue();
+                    longitude = thisRow.getCell('longitude').getValue();
+
+                    // Setup modal for this row in particular
+                    $("#locationPickerModal").find('.modal-title').html("Select a launch location for " + launchName);
+                    $('#locationPickerLat').val(latitude);
+                    $('#locationPickerLon').val(longitude);
+
+                    // Setup save function
+                    $('#locationPickerSave').click(function() {
+                        thisRow.getCell('latitude').setValue($('#locationPickerLat').val());
+                        thisRow.getCell('longitude').setValue($('#locationPickerLon').val());
+                        $('#locationPickerModal').modal("hide")
+                    })
+
+                    // Load the location picker modal
+                    $('#locationPickerModal').modal()
+
+                }},
                 {title: "Launch Time", field:"launch_datetime", formatter:hyperionDateTimeFormatter, editor:hyperionDateTimeEditor},
                 {title: "Launch Country", field:"launch_country_id", formatter: "lookup", formatterParams: countries, editor:"select", editorParams:{values:countries}},
-                {formatter:addWarheadIcon, width:40, align:"center", cellClick:function(e, cell){
+                {formatter:addWarheadIcon, width:40, align:"center", headerSort:false, cellClick:function(e, cell){
                     var nowUTC = moment().utc().toISOString();
                     const id = cell.getRow().getData().id;
                     const subTable = Tabulator.prototype.findTable(".subTable" + id + "")[0];
@@ -169,7 +223,7 @@ var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
                     };
                     subTable.addRow(newWarheadData);
                 }},
-                {formatter:removeMissileIcon, width:40, align:"center", cellClick:function(e, cell){
+                {formatter:removeMissileIcon, width:40, align:"center", headerSort:false, cellClick:function(e, cell){
                     cell.getRow().delete();
                 }},
             ],
@@ -215,6 +269,30 @@ var loadWeaponTable = function(grid, scenarioID, cesiumReloadData) {
                        {title:"Impact Time", field:"impact_datetime", formatter:hyperionDateTimeFormatter, editor:hyperionDateTimeEditor},
                        {title:"Latitude", field:"latitude",  editor:"number", editorParams:{min:-90, max:90, step:0.000000000001}},
                        {title:"Longitude", field:"longitude",  editor:"number", editorParams:{min:-180, max:180, step:0.000000000001}},
+                       {formatter:locationPickerIcon, width:20, align:"center", headerSort:false, cellClick:function(e, cell){
+
+                            // get row information
+                            thisRow = cell.getRow();
+                            targetName = thisRow.getCell('target_display_name').getValue();
+                            latitude = thisRow.getCell('latitude').getValue();
+                            longitude = thisRow.getCell('longitude').getValue();
+
+                            // Setup modal for this row in particular
+                            $("#locationPickerModal").find('.modal-title').html("Select an impact location for " + targetName);
+                            $('#locationPickerLat').val(latitude);
+                            $('#locationPickerLon').val(longitude);
+
+                            // Setup save function
+                            $('#locationPickerSave').click(function() {
+                                thisRow.getCell('latitude').setValue($('#locationPickerLat').val());
+                                thisRow.getCell('longitude').setValue($('#locationPickerLon').val());
+                                $('#locationPickerModal').modal("hide")
+                            })
+
+                            // Load the location picker modal
+                            $('#locationPickerModal').modal()
+
+                        }},
                    ]
                 });
 

@@ -28,10 +28,7 @@ var reloadWeaponCesium = function(scenarioID, cesiumReloadData) {
 
 
 // Main Load Table Function
-var loadWeaponCesium = function(grid, scenarioID) {
-
-    // Dynamically initialize cesium by adding the gridstack widget div and then initializing the cesium viewer
-    grid.addWidget('<div><div class="grid-stack-item-content" id="cesiumContainer"></div></div>', {width: 6, height:9});
+var loadWeaponCesium = function(scenarioID) {
 
     // Initialize Viewer
     var viewer = new Cesium.Viewer("cesiumContainer",{

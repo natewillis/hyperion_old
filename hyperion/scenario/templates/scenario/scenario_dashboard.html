@@ -2,9 +2,10 @@
 {% load static %}
 
 {% block extra_css %}
+
     #cesiumContainer {
         width: 100%;
-        height: 100%;
+        height: 750px;
         margin: 0;
         padding: 0;
         overflow: hidden;
@@ -17,35 +18,90 @@
         font-size: 14px;
     }
 
+    #table-widget {
+        height: 750px;
+    }
+
+    .leaflet-clickable {
+      cursor: crosshair !important;
+    }
+
+    #locationPickerLatLonForm {
+        margin: 10px
+    }
+
+    #locationPickerLatLonForm > .form-group {
+        margin-right: 10px;
+    }
 
 {% endblock %}
 
 {% block extra_css_files %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.min.css" />
 <link href="{% static 'layout/Cesium/Widgets/widgets.css' %}" rel="stylesheet">
-<link href="https://unpkg.com/tabulator-tables@4.7.2/dist/css/tabulator.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+<link href="{% static 'layout/tabulator/css/tabulator.min.css' %}" rel="stylesheet">
+<link href="{% static 'layout/flatpickr/flatpickr.min.css' %}" rel="stylesheet" >
+<link href="{% static 'layout/font-awesome/fontawesome-free-5.14.0-web/css/all.css' %}" rel="stylesheet">
+<link href="{% static 'layout/leaflet/leaflet.css' %}" rel="stylesheet">
+<link href="{% static 'layout/leaflet-locationpicker/dist/leaflet-locationpicker.src.css' %}" rel="stylesheet">
 {% endblock %}
 
 
 {% block content %}
 
     <h1>{{ scenario.name }}</h1>
-    <div class="grid-stack"></div>
+    <div class="row">
 
+        <div class="col" id="cesiumContainer"></div>
+        <div class="col" id="table-widget">
+            <div class="table-controls">
+                <button id="add-weapon-button" type="button" class="btn btn-dark"><i class='fa fa-rocket'></i><i class='fa fa-plus'></i></button>
+                <button id="save-table-button" type="button" class="btn btn-dark"><i class='fa fa-save'></i></button>
+            </div>
+            <div id="shot-table"></div>
+        </div>
+    </div>
+
+    <div id="locationPickerModal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Location Picker</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="locationPickerMap" style="height: 360px;"></div>
+                    <form id="locationPickerLatLonForm" class="form-inline justify-content-center">
+                        <div class="form-group">
+                            <label for="locationPickerLat">Latitude:</label>
+                            <input id="locationPickerLat" placeholder="latitude">
+                        </div>
+                        <div class="form-group">
+                            <label for="locationPickerLon">Longitude:</label>
+                            <input id="locationPickerLon" placeholder="longitude">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button id="locationPickerSave" type="button" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
 {% endblock %}
 
 {% block extra_js %}
-    <script src="https://cdn.jsdelivr.net/npm/gridstack@1.1.2/dist/gridstack.all.js"></script>
     <script src="{% static 'layout/Cesium/Cesium.js' %}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.27.0/moment.min.js" integrity="sha512-rmZcZsyhe0/MAjquhTgiUcb4d9knaFc7b5xAfju483gbEXTkeJRUMIPk6s3ySZMYUHEcjKbjLjyddGWMrNEvZg==" crossorigin="anonymous"></script>
-    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@4.7.2/dist/js/tabulator.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="{% static 'layout/moment/moment.min.js' %}"></script>
+    <script src="{% static 'layout/tabulator/js/tabulator.min.js' %}"></script>
+    <script src="{% static 'layout/flatpickr/flatpickr.js' %}"></script>
+    <script src="{% static 'layout/leaflet/leaflet.js' %}"></script>
+    <script src="{% static 'layout/leaflet-locationpicker/dist/leaflet-locationpicker.min.js' %}"></script>
     <script src="{% static 'scenario/weapon_cesium_widget.js' %}"></script>
     <script src="{% static 'scenario/weapon_table_widget.js' %}"></script>
-
     <script type="text/javascript">
 
         $(document).ready(function() {
@@ -57,15 +113,14 @@
                 }
             });
 
-            // Initialize Gridstack
-            var grid = GridStack.init();
+            //
 
             // Load Cesium Widget
-            cesiumReloadData = loadWeaponCesium(grid, {{scenario.id}});
+            cesiumReloadData = loadWeaponCesium({{scenario.id}});
 
 
             // Load Table Widget
-            loadWeaponTable(grid, {{scenario.id}}, cesiumReloadData);
+            loadWeaponTable({{scenario.id}}, cesiumReloadData);
 
 
 

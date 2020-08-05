@@ -117,8 +117,9 @@ class WeaponTableSerializer(ModelSerializer):
         for warhead_data in data['warheads']:
 
             # turn impact lat/lon back into a point
-            impact_latitude = warhead_data.pop('latitude')
-            impact_longitude = warhead_data.pop('longitude')
+            impact_latitude = float(warhead_data.pop('latitude'))
+            impact_longitude = float(warhead_data.pop('longitude'))
+            print(f'impact lat:{impact_latitude} lon:{impact_longitude}')
             impact_point = Point(x=impact_longitude, y=impact_latitude)
             warhead_data['true_impact_location'] = impact_point
 
